@@ -30,8 +30,34 @@
 public class TextCompressor {
 
     private static void compress() {
+        int n = 2;
+        int occurences = 0;
+        StringBuilder window = new StringBuilder();
 
-        // TODO: Complete the compress() method
+        // Make a window of size n
+        // Slide through file & keep track of a window. increment the # of occurences
+
+        // NEED A HEADER -- pass in the length of dictionary, aka the # of key-value pairs being passed in
+        // Also pass in a key, followed by its value
+        // IDs window
+        while (!BinaryStdIn.isEmpty()){
+            // Reads in whole text
+            String text = BinaryStdIn.readString();
+            for (int i = 0; i < n; i++){
+                window.append(BinaryStdIn.readChar());
+            }
+            occurences += 1;
+            // ID the # of times this window occurs in String
+            // Goes through text
+            for (int i = 0; i < text.length(); i++){
+                String sub = text.substring(i, i + n);
+                if (window.ToStringequals(sub)){
+
+                }
+
+            }
+
+        }
 
         BinaryStdOut.close();
     }
