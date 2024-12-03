@@ -1,3 +1,5 @@
+import java.util.Dictionary;
+import java.util.Hashtable;
 /******************************************************************************
  *  Compilation:  javac TextCompressor.java
  *  Execution:    java TextCompressor - < input.txt   (compress)
@@ -28,38 +30,91 @@
  *  @author Zach Blick, YOUR NAME HERE
  */
 public class TextCompressor {
+    final static int CHARS = 60;
 
     private static void compress() {
-        int n = 2;
-        int occurences = 0;
-        StringBuilder window = new StringBuilder();
+        int occurrences = 0;
+        Dictionary<String, Integer> repeats = new Hashtable<>();
 
-        // Make a window of size n
-        // Slide through file & keep track of a window. increment the # of occurences
+        int index = 0;
+
+        // I'm checking windows of 3, 4, and 5 — 60 is divisible by all of these
+        // Should start by looking at chunks of 60 chars from file
+        // This will make it way faster, but it might miss some occurrences. I'm fine with that.
+
+        // Slide through file & keep track of a window. increment the # of occurrences
 
         // NEED A HEADER -- pass in the length of dictionary, aka the # of key-value pairs being passed in
         // Also pass in a key, followed by its value
         // IDs window
+
         while (!BinaryStdIn.isEmpty()){
-            // Reads in whole text
-            String text = BinaryStdIn.readString();
-            for (int i = 0; i < n; i++){
-                window.append(BinaryStdIn.readChar());
+            // Reads in 60 chars from text
+            StringBuilder segment = new StringBuilder();
+            for (int i = 0; i < CHARS; i++){
+                segment.append(BinaryStdIn.readChar());
             }
-            occurences += 1;
-            // ID the # of times this window occurs in String
-            // Goes through text
-            for (int i = 0; i < text.length(); i++){
-                String sub = text.substring(i, i + n);
-                if (window.ToStringequals(sub)){
 
-                }
+            // Keep sliding the window over repeatedly
+            while (index + 5 < CHARS){
+                // Makes windows of size 3,4, and 5, starting @ index
+                String window3 = window(index, 3);
+                String window4 = window(index, 4);
+                String window5 = window(index, 5);
 
+                // Checks the number of occurrences of all 3 windows in the segment
+                int occur3 = checkOccur(String.valueOf(segment), window3);
+                int occur4 = checkOccur(String.valueOf(segment), window4);
+                int occur5 = checkOccur(String.valueOf(segment), window5);
+
+                // Save the # of occurrences in a dictionary of repeats
+                repeats.put(window3, occur3);
+                repeats.put(window4, occur4);
+                repeats.put(window5, occur5);
+
+                index++;
             }
+        }
+        // Now I need to analyze the repeats dictionary!!
+        // Go through every value in the dictionary. For any that have a key of 3 or above, keep it. Otherwise, remove from dictionary
+        //
+
+        for (int i = 0; i < repeats.size(); i++){
+            if (repeats.get)
 
         }
+        // Make an array of all words that belong, as well as a unique code that corresponds to each
+            // Should I use ascii codes? or maybe binary.
+            // Maybe I should just use a for loop & assign all of the values a binary code between 128 and 256.
+
+        // write an escape character after the dictionary to indicate that the real data is starting
+
+        // Go through the file again this time. If it IDs a certain sequence, write its code
 
         BinaryStdOut.close();
+    }
+
+    // Makes a window starting at index, of length n
+    private static String window(int index, int n){
+        StringBuilder window = new StringBuilder();
+        // Creates window of length n
+        for (int i = index; i < n; i++){
+            window.append(BinaryStdIn.readChar());
+        }
+        return window.toString();
+    }
+
+    // IDs the # of times each window occurs in segment
+    private static int checkOccur(String segment, String window){
+        int occurrences = 0;
+        for (int i = 0; i < CHARS; i++){
+            String sub = segment.substring(i, i + 3);
+            // Increments after a match
+            if (window.equals(sub)){
+                occurrences++;
+            }
+        }
+        return occurrences;
     }
 
     private static void expand() {
