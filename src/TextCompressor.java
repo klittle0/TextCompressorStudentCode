@@ -80,7 +80,8 @@ public class TextCompressor {
         //
 
         for (int i = 0; i < repeats.size(); i++){
-            if (repeats.get)
+            // How can I do this with a for loop?
+            //
 
         }
         // Make an array of all words that belong, as well as a unique code that corresponds to each
