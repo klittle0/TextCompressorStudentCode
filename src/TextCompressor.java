@@ -32,52 +32,68 @@ import java.util.Hashtable;
 public class TextCompressor {
 
     //change this
-    private static final int NUMCODES = 500;
-    private static int lastCode = 0;
+    private static final int NUMCODES = 4096;
+    private static final int EOF = 80;
+    private static final int BITS = 12;
+
+
     private static void compress() {
         // Initialize TST with 256 codes
+        // Is it necessary to do this at the beginning??
         TST prefixes = new TST();
         for (int i = 0; i < 256; i++){
-            // Is this correct?
+            // Is this correct? Does the to-string
             prefixes.insert(Integer.toString(i), i);
-            lastCode = i;
         }
+        // Represents how many codes have been created
+        int numCodes = 256;
+        // Represents the code of the next String/prefix found
+        int startCode = 81;
 
-        // Does this read in the whole thing?? I'm confused abt what's happening here & if my while loop is correct as a result
         String text = BinaryStdIn.readString();
 
-        while (text.length() != 0){
-            int
+        while (!text.isEmpty() && numCodes <= NUMCODES){
             String prefix = prefixes.getLongestPrefix(text);
-            // Write 8-bit code associated with X
+            // Cut prefix out of text
+            text = text.substring(0, prefix.length());
+            // Write 12-bit code associated with X
             int code = prefixes.lookup(prefix);
-            BinaryStdOut.write(code, 8);
-            // Scans one character past — do I need the plus one?
-            int startIndex = text.indexOf(prefix) + prefix.length() + 1;
-            // Check to see if I have reached # codes
-            if ()
-            String ahead = prefix + text.charAt(startIndex);
-            prefixes.insert(ahead, );
-
-
+            BinaryStdOut.write(code, BITS);
+            // Scans one character ahead
+            String ahead = prefix + text.charAt(0);
+            prefixes.insert(ahead, startCode);
+            // Increment to show new # of codes
+            numCodes++;
+            // Increment so next code is different
+            startCode++;
         }
-
-
-        while (!BinaryStdIn.isEmpty()){
-
-
-
-
-        }
-
+        // Write EOF character
+        BinaryStdOut.write(EOF);
         BinaryStdOut.close();
-
     }
 
+    // DON'T USE SUBSTRING ANYWHERE! KEEP TRACK OF THE START INDEX TO SAVE A LOT OF SPACE
     private static void expand() {
+        // Initialize array with all Ascii values
+        int currentCode = 81;
+        String[] prefixes = new String[NUMCODES];
+        for (int i = 0; i < 256; i++){
+            prefixes[i] = Integer.toString(i);
+        }
 
-        // TODO: Complete the expand() method
-
+        // Reads 12 bits at a time
+        int code = BinaryStdIn.readInt(BITS);
+        String val = prefixes[code];
+        // Continue until reaching the EOF code word.
+        while (code != EOF){
+            BinaryStdOut.write(val);
+            int ahead = BinaryStdIn.readInt(BITS);
+            String aheadS = prefixes[ahead];
+            // Add string to array
+            prefixes[currentCode] = val + prefixes[ahead].charAt(0);
+            code = ahead;
+            val = aheadS;
+        }
         BinaryStdOut.close();
     }
 
