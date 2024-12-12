@@ -45,23 +45,21 @@ public class TextCompressor {
         String text = BinaryStdIn.readString();
 
         // LZW algorithm here
-        for (int i = 0; i < text.length(); i++){
-            String prefix = values.getLongestPrefix(text, i);
+        while (text.length() > 0){
+            String prefix = values.getLongestPrefix(text);
+            // Cut prefix out of text
+            text = text.substring(prefix.length());
             int code = values.lookup(prefix);
             // Write out 12-bit code associated with prefix
             BinaryStdOut.write(code, BITS);
 
-            // If there's
-            if (i + prefix.length() < text.length()){
-                // Look one character ahead & add another code if there's room
-                if (currentCodes < MAXCODES){
-                    String ahead = prefix + text.charAt(i + prefix.length());
-                    values.insert(ahead, currentCodes);
-                    currentCodes++;
-                }
+            // If there's enough room & codes remaining
+            if (prefix.length() < text.length() && currentCodes < MAXCODES){
+                // Look one character ahead & insert into TST
+                String ahead = prefix + text.charAt(0);
+                values.insert(ahead, currentCodes);
+                currentCodes++;
             }
-            // Increment, but only if within bounds
-            i += prefix.length() - 1;
         }
         // Write EOF character
         BinaryStdOut.write(EOF, BITS);
@@ -75,13 +73,11 @@ public class TextCompressor {
         for (int i = 0; i < EOF; i++){
             prefixes[i] = String.valueOf((char)i);
         }
-        // Remains empty for end of file character
-        prefixes[EOF] = " ";
 
         // Read 12 bits at a time
         int code = BinaryStdIn.readInt(BITS);
         String value = prefixes[code];
-        // Continue until reaching the EOF code word.
+        // Continue until reaching the EOF code word
         while (code != EOF){
             BinaryStdOut.write(value);
             // Look ahead at next code
