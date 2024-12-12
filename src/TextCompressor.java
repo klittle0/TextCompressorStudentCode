@@ -30,45 +30,40 @@ import java.util.Hashtable;
  *  @author Zach Blick, Kate Little
  */
 public class TextCompressor {
-    private static final int ALLCODES = 4096;
-    private static final int EOF = 80;
+    private static final int MAXCODES = 4096;
+    private static final int EOF = 256;
     private static final int BITS = 12;
 
 
     private static void compress() {
         // Initialize TST with 256 codes
         TST values = new TST();
-        for (int i = 0; i < 256; i++){
+        for (int i = 0; i < EOF; i++){
             values.insert(String.valueOf((char)i), i);
         }
         // Represents how many codes have been created
-        int numCodes = 256;
-        // Represents the code of the next String/prefix found
-        int startCode = 81;
+        int numCodes = EOF + 1;
 
         int currentIndex = 0;
         String text = BinaryStdIn.readString();
 
         // LZW algorithm here
-        while (currentIndex < text.length()){
-            String prefix = values.getLongestPrefix(text, currentIndex);
+        for (int i = 0; i < text.length(); i++){
+            String prefix = values.getLongestPrefix(text, i);
             int code = values.lookup(prefix);
-            // Slide further down text
-            currentIndex += prefix.length();
             // Write 12-bit code associated with prefix
             BinaryStdOut.write(code, BITS);
-            // Scan one character ahead only if within bounds
-            if (currentIndex < text.length() && numCodes < ALLCODES) {
-                String ahead = prefix + text.charAt(currentIndex);
-                values.insert(ahead, startCode);
-                // Increment to represent new # of codes
-                numCodes++;
-                // Increment so next code is different
-                startCode++;
+            if (i + prefix.length() < text.length()){
+                // Increment, but only if within bounds
+                i += prefix.length() - 1;
+                // look one character ahead & add another code if room
+                if (numCodes < MAXCODES){
+                    String ahead = prefix + text.charAt(i + prefix.length());
+                    values.insert(ahead, numCodes);
+                    numCodes++;
+                }
             }
-            else{
-                break;
-            }
+
         }
         // Write EOF character
         BinaryStdOut.write(EOF, BITS);
@@ -78,24 +73,33 @@ public class TextCompressor {
     // DON'T USE SUBSTRING ANYWHERE! KEEP TRACK OF THE START INDEX TO SAVE A LOT OF SPACE
     private static void expand() {
         // Initialize array with all Ascii values
-        int currentCode = 81;
-        String[] prefixes = new String[ALLCODES];
-        for (int i = 0; i < 256; i++){
-            prefixes[i] = Integer.toString(i);
+        int numCodes = EOF + 1;
+        String[] prefixes = new String[MAXCODES];
+        for (int i = 0; i < EOF; i++){
+            prefixes[i] = String.valueOf((char)i);
         }
+        // Remains empty for end of file character
+        prefixes[EOF] = " ";
 
-        // Reads 12 bits at a time
+        // Read 12 bits at a time
         int code = BinaryStdIn.readInt(BITS);
-        String val = prefixes[code];
+        String value = prefixes[code];
         // Continue until reaching the EOF code word.
         while (code != EOF){
-            BinaryStdOut.write(val);
-            int ahead = BinaryStdIn.readInt(BITS);
-            String aheadS = prefixes[ahead];
-            // Add string to array
-            prefixes[currentCode] = val + prefixes[ahead].charAt(0);
-            code = ahead;
-            val = aheadS;
+            BinaryStdOut.write(value);
+            // Look ahead at next code
+            code = BinaryStdIn.readInt(BITS);
+            // If the code doesn't exist yet in prefixes, I need to construct the string myself & add the code
+            if (code >= numCodes){
+                String ahead = value + value.charAt(0);
+                prefixes[numCodes] = ahead;
+            }
+            // Add string to array only if code # is less than 4096
+            else if (numCodes < MAXCODES){
+                String ahead = prefixes[code];
+                prefixes[numCodes] = value + prefixes[code].charAt(0);
+            }
+            numCodes += 1;
         }
         BinaryStdOut.close();
     }
