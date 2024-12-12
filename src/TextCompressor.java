@@ -27,48 +27,51 @@ import java.util.Hashtable;
  *  The {@code TextCompressor} class provides static methods for compressing
  *  and expanding natural language through textfile input.
  *
- *  @author Zach Blick, YOUR NAME HERE
+ *  @author Zach Blick, Kate Little
  */
 public class TextCompressor {
-
-    //change this
-    private static final int NUMCODES = 4096;
+    private static final int ALLCODES = 4096;
     private static final int EOF = 80;
     private static final int BITS = 12;
 
 
     private static void compress() {
         // Initialize TST with 256 codes
-        // Is it necessary to do this at the beginning??
-        TST prefixes = new TST();
+        TST values = new TST();
         for (int i = 0; i < 256; i++){
-            // Is this correct? Does the to-string
-            prefixes.insert(Integer.toString(i), i);
+            values.insert(String.valueOf((char)i), i);
         }
         // Represents how many codes have been created
         int numCodes = 256;
         // Represents the code of the next String/prefix found
         int startCode = 81;
 
+        int currentIndex = 0;
         String text = BinaryStdIn.readString();
 
-        while (!text.isEmpty() && numCodes <= NUMCODES){
-            String prefix = prefixes.getLongestPrefix(text);
-            // Cut prefix out of text
-            text = text.substring(0, prefix.length());
-            // Write 12-bit code associated with X
-            int code = prefixes.lookup(prefix);
+        // LZW algorithm here
+        while (currentIndex < text.length()){
+            String prefix = values.getLongestPrefix(text, currentIndex);
+            int code = values.lookup(prefix);
+            // Slide further down text
+            currentIndex += prefix.length();
+            // Write 12-bit code associated with prefix
             BinaryStdOut.write(code, BITS);
-            // Scans one character ahead
-            String ahead = prefix + text.charAt(0);
-            prefixes.insert(ahead, startCode);
-            // Increment to show new # of codes
-            numCodes++;
-            // Increment so next code is different
-            startCode++;
+            // Scan one character ahead only if within bounds
+            if (currentIndex < text.length() && numCodes < ALLCODES) {
+                String ahead = prefix + text.charAt(currentIndex);
+                values.insert(ahead, startCode);
+                // Increment to represent new # of codes
+                numCodes++;
+                // Increment so next code is different
+                startCode++;
+            }
+            else{
+                break;
+            }
         }
         // Write EOF character
-        BinaryStdOut.write(EOF);
+        BinaryStdOut.write(EOF, BITS);
         BinaryStdOut.close();
     }
 
@@ -76,7 +79,7 @@ public class TextCompressor {
     private static void expand() {
         // Initialize array with all Ascii values
         int currentCode = 81;
-        String[] prefixes = new String[NUMCODES];
+        String[] prefixes = new String[ALLCODES];
         for (int i = 0; i < 256; i++){
             prefixes[i] = Integer.toString(i);
         }
