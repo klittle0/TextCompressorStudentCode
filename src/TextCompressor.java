@@ -34,7 +34,7 @@ public class TextCompressor {
 
 
     private static void compress() {
-        // Initialize TST with 256 codes
+        // Initialize TST with 256 (EOF) codes
         TST values = new TST();
         for (int i = 0; i < EOF; i++){
             values.insert(String.valueOf((char)i), i);
@@ -48,9 +48,10 @@ public class TextCompressor {
         for (int i = 0; i < text.length(); i++){
             String prefix = values.getLongestPrefix(text, i);
             int code = values.lookup(prefix);
-            // Write 12-bit code associated with prefix
+            // Write out 12-bit code associated with prefix
             BinaryStdOut.write(code, BITS);
 
+            // If there's
             if (i + prefix.length() < text.length()){
                 // Look one character ahead & add another code if there's room
                 if (currentCodes < MAXCODES){
