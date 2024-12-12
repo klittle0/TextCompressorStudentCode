@@ -1,5 +1,3 @@
-import java.util.Dictionary;
-import java.util.Hashtable;
 /******************************************************************************
  *  Compilation:  javac TextCompressor.java
  *  Execution:    java TextCompressor - < input.txt   (compress)
@@ -42,9 +40,8 @@ public class TextCompressor {
             values.insert(String.valueOf((char)i), i);
         }
         // Represents how many codes have been created
-        int numCodes = EOF + 1;
-
-        int currentIndex = 0;
+        int currentCodes = EOF + 1;
+        
         String text = BinaryStdIn.readString();
 
         // LZW algorithm here
@@ -53,24 +50,23 @@ public class TextCompressor {
             int code = values.lookup(prefix);
             // Write 12-bit code associated with prefix
             BinaryStdOut.write(code, BITS);
+
             if (i + prefix.length() < text.length()){
-                // Increment, but only if within bounds
-                i += prefix.length() - 1;
-                // look one character ahead & add another code if room
-                if (numCodes < MAXCODES){
+                // Look one character ahead & add another code if there's room
+                if (currentCodes < MAXCODES){
                     String ahead = prefix + text.charAt(i + prefix.length());
-                    values.insert(ahead, numCodes);
-                    numCodes++;
+                    values.insert(ahead, currentCodes);
+                    currentCodes++;
                 }
             }
-
+            // Increment, but only if within bounds
+            i += prefix.length() - 1;
         }
         // Write EOF character
         BinaryStdOut.write(EOF, BITS);
         BinaryStdOut.close();
     }
 
-    // DON'T USE SUBSTRING ANYWHERE! KEEP TRACK OF THE START INDEX TO SAVE A LOT OF SPACE
     private static void expand() {
         // Initialize array with all Ascii values
         int numCodes = EOF + 1;
@@ -90,16 +86,17 @@ public class TextCompressor {
             // Look ahead at next code
             code = BinaryStdIn.readInt(BITS);
             // If the code doesn't exist yet in prefixes, I need to construct the string myself & add the code
-            if (code >= numCodes){
-                String ahead = value + value.charAt(0);
+            String ahead = prefixes[code];
+            if (code == numCodes){
+                ahead = value + value.charAt(0);
                 prefixes[numCodes] = ahead;
             }
             // Add string to array only if code # is less than 4096
-            else if (numCodes < MAXCODES){
-                String ahead = prefixes[code];
+            if (numCodes < MAXCODES){
                 prefixes[numCodes] = value + prefixes[code].charAt(0);
             }
             numCodes += 1;
+            value = ahead;
         }
         BinaryStdOut.close();
     }
